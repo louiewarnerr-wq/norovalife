@@ -1,0 +1,68 @@
+{
+  "events": [
+    {
+      "id": "born",
+      "ageMin": 0,
+      "ageMax": 0,
+      "title": "You were born",
+      "text": "A new life begins in {country}.",
+      "choices": [
+        {
+          "label": "Begin",
+          "effects": { "happiness": 5 }
+        }
+      ]
+    },
+    {
+      "id": "school_day",
+      "ageMin": 5,
+      "ageMax": 18,
+      "title": "School Drama",
+      "text": "Someone spreads rumours about you.",
+      "choices": [
+        {
+          "label": "Confront them",
+          "effects": { "happiness": 2, "karma": -1 }
+        },
+        {
+          "label": "Ignore it",
+          "effects": { "intelligence": 1 }
+        }
+      ]
+    },
+    {
+      "id": "steal",
+      "ageMin": 14,
+      "ageMax": 40,
+      "title": "Steal something?",
+      "text": "You see something expensive unattended.",
+      "choices": [
+        {
+          "label": "Steal it",
+          "effects": { "money": 300, "karma": -5 }
+        },
+        {
+          "label": "Walk away",
+          "effects": { "karma": 2 }
+        }
+      ]
+    },
+    {
+      "id": "promotion",
+      "ageMin": 22,
+      "ageMax": 60,
+      "title": "Promotion Chance",
+      "text": "Your boss is considering you.",
+      "choices": [
+        {
+          "label": "Work harder",
+          "effects": { "money": 500, "happiness": -1 }
+        },
+        {
+          "label": "Do minimum",
+          "effects": { "happiness": 2 }
+        }
+      ]
+    }
+  ]
+}
