@@ -1,171 +1,48 @@
-<!doctype html>
-<html lang="en">
+<!DOCTYPE html>
+<html>
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#0a0f1f" />
-  <title>NorovaLife</title>
-
-  <!-- iOS app-like -->
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-
-  <link rel="manifest" href="manifest.webmanifest" />
-  <link rel="stylesheet" href="styles.css" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NorovaLife</title>
+<link rel="stylesheet" href="styles.css">
 </head>
-
 <body>
-  <!-- Top App Bar (safe area) -->
-  <header class="topbar safePad">
-    <div class="brand">
-      <div class="logo">N</div>
-      <div class="brandText">
-        <div class="title">NorovaLife</div>
-        <div class="subtitle" id="subline">Life sim • v0.2</div>
-      </div>
-    </div>
 
-    <button class="iconBtn" id="btnSettings" aria-label="Settings" title="Settings">
-      <span class="icon">⚙️</span>
-    </button>
-  </header>
+<header class="topbar">
+  <h1>NorovaLife</h1>
+</header>
 
-  <!-- Main (safe area) -->
-  <main class="wrap safePad">
+<main>
+<section id="setup">
+<h2>Create Character</h2>
+<input id="nameInput" placeholder="Name">
+<select id="countryInput">
+<option>USA</option>
+<option>UK</option>
+<option>Canada</option>
+<option>Australia</option>
+<option>Germany</option>
+<option>France</option>
+<option>Japan</option>
+<option>Nigeria</option>
+<option>Brazil</option>
+<option>India</option>
+</select>
+<button id="startBtn">Start Life</button>
+</section>
 
-    <!-- Setup -->
-    <section class="card setup" id="setupCard">
-      <div class="cardHeader">
-        <h2>Create your character</h2>
-        <p class="muted">Start small. Build your story year by year.</p>
-      </div>
+<section id="game" class="hidden">
+<div id="profile"></div>
+<div id="stats"></div>
+<button id="ageBtn" class="ageBtn">+ Age</button>
+<div id="feed" class="feed"></div>
+</section>
+</main>
 
-      <div class="formGrid">
-        <label class="field">
-          <span class="fieldLabel">Name</span>
-          <input id="nameInput" placeholder="e.g., Nova" maxlength="18" />
-        </label>
+<script src="core/state.js"></script>
+<script src="core/simulation.js"></script>
+<script src="core/events.js"></script>
+<script src="core/ui.js"></script>
 
-        <label class="field">
-          <span class="fieldLabel">Country</span>
-          <select id="countryInput">
-            <option value="UK">UK</option>
-            <option value="USA">USA</option>
-            <option value="Canada">Canada</option>
-            <option value="Nigeria">Nigeria</option>
-            <option value="Japan">Japan</option>
-          </select>
-        </label>
-      </div>
-
-      <div class="traits">
-        <div class="traitsHead">
-          <div class="muted">Pick 1 trait</div>
-          <div class="hint">It slightly boosts certain event types.</div>
-        </div>
-        <div class="pillrow" id="traitRow"></div>
-      </div>
-
-      <div class="actions">
-        <button class="btn primary" id="btnStart">Start Life</button>
-        <button class="btn" id="btnDemo">Demo</button>
-      </div>
-
-      <div class="installTip">
-        <div class="installTitle">Install on iPhone</div>
-        <div class="installText">Safari → Share → <b>Add to Home Screen</b></div>
-      </div>
-    </section>
-
-    <!-- Game -->
-    <section class="card game hidden" id="gameCard">
-
-      <div class="profileRow">
-        <div class="profileLeft">
-          <div class="who" id="whoLine">—</div>
-          <div class="meta muted" id="metaLine">—</div>
-        </div>
-
-        <button class="btn ageBtn" id="btnAge">
-          <span class="ageTop">AGE</span>
-          <span class="ageBottom">+1</span>
-        </button>
-      </div>
-
-      <div class="statsWrap">
-        <div class="statsHeader">
-          <div class="sectionTitle">Stats</div>
-          <div class="muted small">Tap AGE to advance</div>
-        </div>
-        <div class="stats" id="statsGrid"></div>
-      </div>
-
-      <div class="relationshipsWrap">
-  <div class="sectionTitle">Relationships</div>
-  <div id="relationshipsList"></div>
-</div>
-
-      <div class="eventCard">
-        <div class="eventTop">
-          <div class="eventTitle" id="eventTitle">Press AGE</div>
-          <div class="badge" id="eventBadge">Event</div>
-        </div>
-
-        <div class="eventText" id="eventText">Your life begins…</div>
-        <div class="choices" id="choices"></div>
-      </div>
-
-      <div class="bottomRow">
-        <button class="btn subtle" id="btnSave">Save</button>
-        <button class="btn subtle danger" id="btnReset">Reset</button>
-      </div>
-
-      <p class="muted small saveHint" id="saveHint"></p>
-    </section>
-
-    <!-- Settings modal -->
-    <section class="modal hidden" id="settingsModal" role="dialog" aria-modal="true">
-      <div class="modalCard">
-        <div class="modalHeader">
-          <div>
-            <div class="modalTitle">Settings</div>
-            <div class="muted small">Tune the feel of the game</div>
-          </div>
-          <button class="iconBtn" id="btnCloseSettings" aria-label="Close" title="Close">✖</button>
-        </div>
-
-        <div class="settingRow">
-          <label class="toggle">
-            <input type="checkbox" id="toggleHaptics" />
-            <span>
-              <b>Haptics</b>
-              <span class="muted small">Vibrate on choices</span>
-            </span>
-          </label>
-        </div>
-
-        <div class="settingRow">
-          <label class="toggle">
-            <input type="checkbox" id="toggleHardMode" />
-            <span>
-              <b>Hard mode</b>
-              <span class="muted small">Harsher outcomes</span>
-            </span>
-          </label>
-        </div>
-
-        <div class="modalFooter muted small">
-          Expand content in <code>events.json</code>.
-        </div>
-      </div>
-    </section>
-
-  </main>
-
-  <footer class="foot muted small safePad">
-    © <span id="year"></span> NorovaLife • <a href="privacy.html">Privacy</a> • <a href="support.html">Support</a>
-  </footer>
-
-  <script src="app.js"></script>
 </body>
 </html>
