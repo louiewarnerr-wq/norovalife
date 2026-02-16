@@ -3,9 +3,10 @@
    - Event lifecycle: event resolves after 1 choice (no spam)
    - Relationships: parents + friends + actions
    - Scalable event format: requirements, flags, risk, addRelationship
+   - Added: gender + name auto-gen + parents share player last name
 */
 
-const SAVE_KEY = "norovalife_save_v100";
+const SAVE_KEY = "norovalife_save_v101";
 
 const $ = (id) => document.getElementById(id);
 const clamp = (n,min,max) => Math.max(min, Math.min(max, n));
@@ -25,10 +26,92 @@ function fmtMoney(n){
   return currencySymbol() + v.toLocaleString();
 }
 
+/* ---------- Name helpers ---------- */
+function splitName(full){
+  const parts = String(full || "").trim().split(/\s+/).filter(Boolean);
+  if(parts.length <= 1) return { first: parts[0] || "", last: "" };
+  return { first: parts[0], last: parts.slice(1).join(" ") };
+}
+
+function cultureKeyFromCountry(country){
+  const c = (country||"").toLowerCase();
+  if(c.includes("united kingdom") || c === "uk" || c.includes("england") || c.includes("scotland") || c.includes("wales")) return "uk";
+  if(c.includes("united states") || c.includes("usa")) return "usa";
+  if(c.includes("ireland")) return "ireland";
+  if(c.includes("nigeria")) return "nigeria";
+  if(c.includes("japan")) return "japan";
+  if(c.includes("india")) return "india";
+  if(c.includes("united arab emirates") || c.includes("saudi") || c.includes("qatar") || c.includes("kuwait") || c.includes("jordan") || c.includes("lebanon")) return "arab";
+  return "uk";
+}
+
+const NAME_BANK = {
+  uk: {
+    female:["Olivia","Amelia","Isla","Ava","Emily","Sophia","Grace","Ella","Freya","Mia","Chloe","Lily"],
+    male:["Oliver","George","Noah","Arthur","Leo","Harry","Jack","Charlie","Theodore","Oscar","Jacob","Freddie"],
+    neutral:["Alex","Jamie","Taylor","Morgan","Riley","Casey","Avery","Jordan","Quinn","Parker"],
+    last:["Smith","Jones","Taylor","Brown","Williams","Wilson","Davies","Evans","Thomas","Roberts","Walker","Wright"]
+  },
+  usa: {
+    female:["Emma","Olivia","Ava","Sophia","Isabella","Mia","Charlotte","Amelia","Harper","Evelyn","Abigail","Luna"],
+    male:["Liam","Noah","Oliver","Elijah","James","William","Benjamin","Lucas","Henry","Theodore","Jack","Levi"],
+    neutral:["Alex","Jordan","Taylor","Casey","Riley","Avery","Quinn","Parker","Cameron","Reese"],
+    last:["Smith","Johnson","Williams","Brown","Jones","Miller","Davis","Garcia","Rodriguez","Wilson","Martinez","Anderson"]
+  },
+  ireland: {
+    female:["Aoife","Niamh","Saoirse","Ciara","Orla","Maeve","Aisling","Roisin","Siobhan","Clodagh","Eimear","Grainne"],
+    male:["Conor","Sean","Cian","Oisin","Finn","Ronan","Darragh","Eoghan","Cathal","Tadhg","Liam","Fionn"],
+    neutral:["Casey","Morgan","Riley","Jamie","Quinn"],
+    last:["Murphy","Kelly","O'Sullivan","Walsh","O'Brien","Byrne","Ryan","O'Connor","Doyle","McCarthy","Gallagher"]
+  },
+  nigeria: {
+    female:["Chioma","Zainab","Amina","Temilade","Adaeze","Sade","Funke","Halima","Ifeoma","Bolanle","Hauwa","Ngozi"],
+    male:["Chinedu","Emeka","Ibrahim","Tunde","Babatunde","Ahmed","Uche","Oluwaseun","Kelechi","Sani","Abdul","Kunle"],
+    neutral:["Alex","Taylor","Sam","Jordan"],
+    last:["Okafor","Balogun","Adeyemi","Ibrahim","Abubakar","Okoye","Ogunleye","Mohammed","Nwankwo","Yakubu","Adebayo","Eze"]
+  },
+  japan: {
+    female:["Yui","Aoi","Hina","Sakura","Rin","Mio","Akari","Nanami","Hana","Haruka","Mei","Yuna"],
+    male:["Haruto","Yuto","Sota","Ren","Yuki","Kaito","Daiki","Ryota","Takumi","Riku","Sho","Hinata"],
+    neutral:["Haru","Ren","Sora","Yuki"],
+    last:["Sato","Suzuki","Takahashi","Tanaka","Watanabe","Ito","Yamamoto","Nakamura","Kobayashi","Kato","Yoshida","Yamada"]
+  },
+  india: {
+    female:["Aanya","Anaya","Isha","Diya","Saanvi","Priya","Kavya","Meera","Riya","Anjali","Aditi","Nisha"],
+    male:["Arjun","Aarav","Vihaan","Aditya","Rohan","Rahul","Karan","Ishaan","Kabir","Siddharth","Vivek","Neel"],
+    neutral:["Kiran","Ari","Devan","Ravi"],
+    last:["Sharma","Verma","Patel","Gupta","Singh","Kumar","Reddy","Nair","Iyer","Mehta","Chopra","Jain"]
+  },
+  arab: {
+    female:["Fatima","Aisha","Layla","Mariam","Noor","Sara","Yasmin","Zahra","Hana","Rania","Amira","Salma"],
+    male:["Mohammed","Ahmed","Omar","Ali","Hassan","Yusuf","Ibrahim","Khalid","Amir","Nabil","Karim","Saeed"],
+    neutral:["Noor","Rayan","Salam","Ari"],
+    last:["Al-Farsi","Al-Harbi","Al-Mansoori","Al-Qahtani","Haddad","Nasser","Salem","Rahman","Hussein","Abdullah","Mahmoud"]
+  }
+};
+
+function generateFullName(country, gender){
+  const key = cultureKeyFromCountry(country);
+  const bank = NAME_BANK[key] || NAME_BANK.uk;
+
+  const firstPool =
+    gender === "female" ? bank.female :
+    gender === "male" ? bank.male :
+    bank.neutral;
+
+  const first = pick(firstPool);
+  const last = pick(bank.last);
+  return `${first} ${last}`;
+}
+
 /* ---------- State ---------- */
 function defaultState(){
   return {
-    name: "",
+    // player name split
+    name: "",      // first name
+    lastName: "",  // last name
+    gender: "female",
+
     country: "United Kingdom",
     trait: "charming",
     age: 0,
@@ -65,99 +148,65 @@ function resetAll(){
 }
 
 /* ---------- Relationships ---------- */
-function makePerson(type){
+function makePerson(type, forcedLastName){
   const id = (crypto?.randomUUID ? crypto.randomUUID() : String(Date.now()+rnd()));
+  const country = state?.country || "United Kingdom";
 
-  // Decide “gender-ish” name pool based on relationship type
-  const wantFemale = (type === "mother");
-  const wantMale   = (type === "father");
+  // For parents, lock first name pool to gender
+  let gender = "nonbinary";
+  if(type === "mother") gender = "female";
+  if(type === "father") gender = "male";
 
-  // Pick a culture based on your current country
-  const c = (state?.country || "United Kingdom").toLowerCase();
+  const full = generateFullName(country, gender);
+  const parts = splitName(full);
 
-  // --- Name banks (expand anytime) ---
-  const BANK = {
-    uk: {
-      female: ["Olivia","Amelia","Isla","Ava","Emily","Sophia","Grace","Ella","Freya","Mia","Chloe","Lily"],
-      male:   ["Oliver","George","Noah","Arthur","Leo","Harry","Jack","Charlie","Theodore","Oscar","Jacob","Freddie"],
-      last:   ["Smith","Jones","Taylor","Brown","Williams","Wilson","Davies","Evans","Thomas","Roberts","Walker","Wright"]
-    },
-    usa: {
-      female: ["Emma","Olivia","Ava","Sophia","Isabella","Mia","Charlotte","Amelia","Harper","Evelyn","Abigail","Luna"],
-      male:   ["Liam","Noah","Oliver","Elijah","James","William","Benjamin","Lucas","Henry","Theodore","Jack","Levi"],
-      last:   ["Smith","Johnson","Williams","Brown","Jones","Miller","Davis","Garcia","Rodriguez","Wilson","Martinez","Anderson"]
-    },
-    ireland: {
-      female: ["Aoife","Niamh","Saoirse","Ciara","Orla","Maeve","Aisling","Roisin","Siobhan","Clodagh","Eimear","Grainne"],
-      male:   ["Conor","Sean","Cian","Oisin","Finn","Ronan","Darragh","Eoghan","Cathal","Tadhg","Liam","Fionn"],
-      last:   ["Murphy","Kelly","O'Sullivan","Walsh","Smith","O'Brien","Byrne","Ryan","O'Connor","Doyle","McCarthy","Gallagher"]
-    },
-    nigeria: {
-      female: ["Chioma","Zainab","Amina","Temilade","Adaeze","Sade","Funke","Halima","Ifeoma","Bolanle","Hauwa","Ngozi"],
-      male:   ["Chinedu","Emeka","Ibrahim","Tunde","Babatunde","Ahmed","Uche","Oluwaseun","Kelechi","Sani","Abdul","Kunle"],
-      last:   ["Okafor","Balogun","Adeyemi","Ibrahim","Abubakar","Okoye","Ogunleye","Mohammed","Nwankwo","Yakubu","Adebayo","Eze"]
-    },
-    japan: {
-      // Use common romaji for simplicity; you can swap to kana/kanji later
-      female: ["Yui","Aoi","Hina","Sakura","Rin","Mio","Akari","Nanami","Hana","Haruka","Mei","Yuna"],
-      male:   ["Haruto","Yuto","Sota","Ren","Yuki","Kaito","Daiki","Ryota","Takumi","Riku","Sho","Hinata"],
-      last:   ["Sato","Suzuki","Takahashi","Tanaka","Watanabe","Ito","Yamamoto","Nakamura","Kobayashi","Kato","Yoshida","Yamada"]
-    },
-    india: {
-      female: ["Aanya","Anaya","Isha","Diya","Saanvi","Priya","Kavya","Meera","Riya","Anjali","Aditi","Nisha"],
-      male:   ["Arjun","Aarav","Vihaan","Aditya","Rohan","Rahul","Karan","Ishaan","Kabir","Siddharth","Vivek","Neel"],
-      last:   ["Sharma","Verma","Patel","Gupta","Singh","Kumar","Reddy","Nair","Iyer","Mehta","Chopra","Jain"]
-    },
-    arab: {
-      female: ["Fatima","Aisha","Layla","Mariam","Noor","Sara","Yasmin","Zahra","Hana","Rania","Amira","Salma"],
-      male:   ["Mohammed","Ahmed","Omar","Ali","Hassan","Yusuf","Ibrahim","Khalid","Amir","Nabil","Karim","Saeed"],
-      last:   ["Al-Farsi","Al-Harbi","Al-Mansoori","Al-Qahtani","Haddad","Nasser","Salem","Khan","Rahman","Hussein","Abdullah","Mahmoud"]
-    }
-  };
-
-  function cultureKeyFromCountry(countryLower){
-    if(countryLower.includes("united kingdom") || countryLower === "uk" || countryLower.includes("england") || countryLower.includes("scotland") || countryLower.includes("wales")) return "uk";
-    if(countryLower.includes("united states") || countryLower.includes("usa")) return "usa";
-    if(countryLower.includes("ireland")) return "ireland";
-    if(countryLower.includes("nigeria")) return "nigeria";
-    if(countryLower.includes("japan")) return "japan";
-    if(countryLower.includes("india")) return "india";
-    if(countryLower.includes("united arab emirates") || countryLower.includes("saudi") || countryLower.includes("qatar") || countryLower.includes("kuwait") || countryLower.includes("jordan") || countryLower.includes("lebanon")) return "arab";
-    return "uk"; // default fallback vibe
-  }
-
-  const key = cultureKeyFromCountry(c);
-  const pool = BANK[key] || BANK.uk;
-
-  const female = pool.female;
-  const male   = pool.male;
-  const last   = pool.last;
-
-  const first =
-    wantFemale ? pick(female)
-    : wantMale ? pick(male)
-    : pick([...female, ...male]);
-
-  const full = `${first} ${pick(last)}`;
+  // Force family surname = player last name
+  const last = (forcedLastName || state?.lastName || parts.last || "Smith").trim();
+  const name = `${parts.first} ${last}`.trim();
 
   return {
     id,
     type,
-    name: full,
+    name,
     closeness: 60,
     trust: 60,
     respect: 60
   };
 }
+
 function ensureParents(){
   const hasMom = state.relationships.some(r=>r.type==="mother");
   const hasDad = state.relationships.some(r=>r.type==="father");
-  if(!hasMom) state.relationships.push(makePerson("mother"));
-  if(!hasDad) state.relationships.push(makePerson("father"));
+  if(!hasMom) state.relationships.push(makePerson("mother", state.lastName));
+  if(!hasDad) state.relationships.push(makePerson("father", state.lastName));
+}
+
+function fixParentNamesAndSurnames(){
+  // if save had Mother/Father or wrong surname, update quietly
+  const last = (state.lastName || "").trim();
+  if(!last) return;
+
+  state.relationships.forEach(r=>{
+    if(r.type !== "mother" && r.type !== "father") return;
+
+    const parts = splitName(r.name);
+    const looksPlaceholder = (r.name === "Mother" || r.name === "Father");
+    const wrongLast = parts.last && parts.last !== last;
+
+    if(looksPlaceholder || wrongLast || !parts.last){
+      // keep first name if it exists and isn't placeholder; otherwise regenerate
+      let first = parts.first;
+      if(looksPlaceholder || !first || first.toLowerCase() === "mother" || first.toLowerCase() === "father"){
+        first = splitName(generateFullName(state.country, r.type==="mother" ? "female" : "male")).first;
+      }
+      r.name = `${first} ${last}`.trim();
+    }
+  });
 }
 
 function addFriend(){
-  state.relationships.push(makePerson("friend"));
+  // friends are not forced to share your last name
+  state.relationships.push(makePerson("friend", null));
   toast("You made a new friend.");
   renderRelationships();
   save();
@@ -272,9 +321,11 @@ function toast(msg){
 
 /* ---------- Rendering ---------- */
 function renderProfile(){
-  $("whoLine").textContent = `${state.name} • Age ${state.age}`;
   const traitName = db.traits.find(t=>t.id===state.trait)?.name || state.trait;
-  $("metaLine").textContent = `${state.country} • Trait: ${traitName}`;
+  const fullName = `${state.name} ${state.lastName}`.trim();
+
+  $("whoLine").textContent = `${fullName || "—"} • Age ${state.age}`;
+  $("metaLine").textContent = `${state.country} • ${state.gender} • Trait: ${traitName}`;
   $("moneyLine").textContent = fmtMoney(state.stats.money);
 }
 
@@ -307,11 +358,35 @@ function renderStats(){
   }).join("");
 }
 
+function renderMiniRelationships(){
+  const el = $("miniRel");
+  if(!el) return;
+
+  const parents = (state.relationships||[]).filter(r => r.type === "mother" || r.type === "father");
+  if(parents.length === 0){
+    el.innerHTML = "";
+    return;
+  }
+
+  const bar = (v)=>`<div class="bar"><div class="fill" style="width:${clamp(v,0,100)}%"></div></div>`;
+
+  el.innerHTML = `
+    <div class="miniRelTitle">Parents</div>
+    ${parents.map(p=>`
+      <div class="stat">
+        <div class="statName">${p.name}</div>
+        ${bar(p.closeness)}
+        <div class="statVal">${p.closeness}</div>
+      </div>
+    `).join("")}
+  `;
+}
+
 function renderAll(){
   renderProfile();
   renderStats();
   renderRelationships();
-  renderMiniRelationships();   // ← ADD IT HERE
+  renderMiniRelationships();
 }
 
 /* ---------- Event Engine ---------- */
@@ -338,13 +413,11 @@ function traitBoost(ev){
 function pickEvent(){
   const age = state.age;
 
-  // ONLY pick events that match current age
   const pool = db.events
     .filter(e => age >= e.ageMin && age <= e.ageMax)
     .filter(meetsRequirements)
     .filter(e => e.id !== state.lastEventId);
 
-  // If nothing matches, show a neutral filler event instead of falling back to ALL events
   if(pool.length === 0){
     return {
       id: "filler_" + age,
@@ -354,7 +427,6 @@ function pickEvent(){
     };
   }
 
-  // Weighted pick
   let total = 0;
   const weighted = pool.map(e=>{
     const base = (typeof e.weight === "number") ? e.weight : 10;
@@ -401,20 +473,20 @@ function applyRisk(risk){
 function showEvent(ev){
   state.lastEventId = ev.id;
 
-  $("eventTitle").textContent = ev.title || "Event";
-  $("eventText").textContent = (ev.text || "")
+  const renderedText = (ev.text || "")
     .replaceAll("{country}", state.country)
-    .replaceAll("{name}", state.name);
+    .replaceAll("{name}", `${state.name} ${state.lastName}`.trim() || state.name);
+
+  $("eventTitle").textContent = ev.title || "Event";
+  $("eventText").textContent = renderedText;
 
   const wrap = $("choices");
   wrap.innerHTML = (ev.choices || []).map((c,i)=>`
     <button class="choice" data-i="${i}">${c.label}</button>
   `).join("");
 
-  // Each event can only be resolved once
   wrap.querySelectorAll("button").forEach(btn=>{
     btn.onclick = ()=>{
-      // lock
       wrap.querySelectorAll("button").forEach(b=>b.disabled=true);
 
       const choice = ev.choices[Number(btn.dataset.i)];
@@ -422,15 +494,13 @@ function showEvent(ev){
       applyFlags(choice.flags);
       applyRisk(choice.risk);
 
-      // optional: relationship spawn
       if(choice.addRelationship?.type === "friend"){
-        state.relationships.push(makePerson("friend"));
+        state.relationships.push(makePerson("friend", null));
         toast("New relationship added.");
       }
 
       renderAll();
 
-      // resolve event -> replace with continue
       wrap.innerHTML = `<button class="choice" id="btnContinue">Continue</button>`;
       $("btnContinue").onclick = ()=>{
         $("eventTitle").textContent = "Life";
@@ -438,7 +508,6 @@ function showEvent(ev){
         wrap.innerHTML = "";
       };
 
-      // death check
       if(state.stats.health <= 0){
         state.alive = false;
         $("eventTitle").textContent = "You died";
@@ -458,14 +527,12 @@ function ageUp(){
 
   state.age += 1;
 
-  // passive drift (makes choices matter)
   state.stats.happiness = clamp(state.stats.happiness - 1, 0, 100);
   if(state.age > 35) state.stats.health = clamp(state.stats.health - 1, 0, 100);
 
-  // chance to auto-create a friend at school ages
   if(state.age >= 6 && state.age <= 14 && rnd() < 0.22){
     if(!state.relationships.some(r=>r.type==="friend")){
-      state.relationships.push(makePerson("friend"));
+      state.relationships.push(makePerson("friend", null));
       toast("You made a new friend.");
     }
   }
@@ -496,7 +563,6 @@ function doActivity(kind){
     toast(`You earned ${fmtMoney(pay)}.`);
   }
   if(kind==="chaos"){
-    // dark humor / chaos
     const roll = rnd();
     if(roll < 0.5){
       state.stats.happiness = clamp(state.stats.happiness + 3, 0, 100);
@@ -537,30 +603,6 @@ function renderCountryPicker(){
   sel.value = "United Kingdom";
 }
 
-function renderMiniRelationships(){
-  const el = $("miniRel");
-  if(!el) return;
-
-  const parents = (state.relationships||[]).filter(r => r.type === "mother" || r.type === "father");
-  if(parents.length === 0){
-    el.innerHTML = "";
-    return;
-  }
-
-  const bar = (v)=>`<div class="bar"><div class="fill" style="width:${clamp(v,0,100)}%"></div></div>`;
-
-  el.innerHTML = `
-    <div class="miniRelTitle">Parents</div>
-    ${parents.map(p=>`
-      <div class="stat">
-        <div class="statName">${p.name}</div>
-        ${bar(p.closeness)}
-        <div class="statVal">${p.closeness}</div>
-      </div>
-    `).join("")}
-  `;
-}
-
 /* ---------- Init ---------- */
 function wireUI(){
   document.querySelectorAll(".navBtn").forEach(btn=>{
@@ -569,27 +611,59 @@ function wireUI(){
 
   $("btnReset").onclick = resetAll;
 
+  // Auto-generate on country change
+  $("countryInput").onchange = () => {
+    const g = $("genderInput")?.value || "female";
+    $("nameInput").value = generateFullName($("countryInput").value, g);
+  };
+
+  // Auto-generate on gender change
+  $("genderInput").onchange = () => {
+    $("nameInput").value = generateFullName($("countryInput").value, $("genderInput").value);
+  };
+
+  // Random button
+  $("btnRandomName").onclick = () => {
+    $("nameInput").value = generateFullName($("countryInput").value, $("genderInput")?.value || "female");
+  };
+
   $("btnDemo").onclick = ()=>{
-    $("nameInput").value = pick(["Nova","Noah","Ava","Mila","Kai","Zara","Amir"]);
     $("countryInput").value = pick(countries);
+    $("genderInput").value = pick(["female","male","nonbinary"]);
+    $("nameInput").value = generateFullName($("countryInput").value, $("genderInput").value);
     toast("Demo filled.");
   };
 
   $("btnStart").onclick = ()=>{
-    const name = $("nameInput").value.trim();
-    if(!name) return alert("Add a name first.");
+    const full = $("nameInput").value.trim();
+    if(!full) return alert("You must choose a name (or press 🎲).");
 
     state = defaultState();
-    state.name = name;
     state.country = $("countryInput").value;
+    state.gender = $("genderInput")?.value || "female";
     state.trait = $("traitRow").dataset.selected || "charming";
-    ensureParents();
+
+    // Split player name; if no last name, auto add one
+    const parts = splitName(full);
+    if(!parts.first) return alert("You must choose a name (or press 🎲).");
+
+    if(!parts.last){
+      const auto = splitName(generateFullName(state.country, state.gender));
+      state.name = parts.first;
+      state.lastName = auto.last || "Smith";
+    }else{
+      state.name = parts.first;
+      state.lastName = parts.last;
+    }
+
+    // Parents inherit player's last name
+    state.relationships.push(makePerson("mother", state.lastName));
+    state.relationships.push(makePerson("father", state.lastName));
 
     save("Saved • new life");
     show("viewLife");
     renderAll();
 
-    // Birth event
     const born = db.events.find(e=>e.ageMin===0 && e.ageMax===0) || pickEvent();
     showEvent(born);
   };
@@ -608,7 +682,6 @@ function wireUI(){
 }
 
 (function init(){
-  // sanity check
   if(!db || !db.events || !countries){
     alert("Data files missing. Ensure /data/events.js and /data/countries.js exist.");
     return;
@@ -618,6 +691,14 @@ function wireUI(){
   renderCountryPicker();
   wireUI();
 
+  // set initial auto name
+  if($("genderInput")){
+    $("genderInput").value = "female";
+  }
+  if($("nameInput")){
+    $("nameInput").value = generateFullName($("countryInput").value, $("genderInput")?.value || "female");
+  }
+
   const existing = load();
   if(existing){
     state = existing;
@@ -626,13 +707,26 @@ function wireUI(){
     state.stats ||= {};
     state.relationships ||= [];
     state.flags ||= {};
+    if(!state.gender) state.gender = "female";
+    if(state.lastName === undefined) state.lastName = "";
+
+    // If older saves stored full name in state.name, attempt split once
+    if(state.name && !state.lastName && state.name.includes(" ")){
+      const parts = splitName(state.name);
+      state.name = parts.first;
+      state.lastName = parts.last;
+    }
+
     ensureParents();
+    fixParentNamesAndSurnames();
 
     show("viewLife");
     renderAll();
     $("eventTitle").textContent = "Welcome back";
     $("eventText").textContent = "Press Age to continue.";
     $("choices").innerHTML = "";
+
+    save("Migrated save");
   }else{
     state = defaultState();
     show("viewSetup");
