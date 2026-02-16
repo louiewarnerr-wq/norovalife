@@ -20,6 +20,23 @@ function vib(){
   }catch{}
 }
 
+function randomName(){
+  const names = ["Alex","Jamie","Taylor","Jordan","Sam","Avery","Morgan","Riley","Casey","Harper"];
+  return names[Math.floor(Math.random()*names.length)];
+}
+
+function createPerson(type, ageOffset = 0){
+  return {
+    id: crypto.randomUUID(),
+    name: randomName(),
+    type: type, // mother, father, friend, partner, child
+    age: Math.max(0, state.age + ageOffset),
+    closeness: 60,
+    trust: 60,
+    respect: 60
+  };
+}
+
 function defaultState(){
   return {
     name: "",
@@ -27,7 +44,26 @@ function defaultState(){
     trait: "charming",
     age: 0,
     alive: true,
-    stats: { health: 80, happiness: 80, smarts: 50, looks: 50, money: 0, karma: 50 },
+
+    stats: {
+      health: 80,
+      mentalHealth: 80,
+      happiness: 80,
+      intelligence: 50,
+      looks: 50,
+      fitness: 50,
+      discipline: 50,
+      confidence: 50,
+      money: 0,
+      reputation: 50,
+      karma: 50,
+      stress: 20
+    },
+
+    relationships: [],
+
+    flags: {},
+
     lastEventId: null
   };
 }
@@ -294,6 +330,9 @@ function wireUI(){
     if(!name){ alert("Add a name first."); return; }
 
     state = defaultState();
+    // Generate parents
+state.relationships.push(createPerson("mother", 25));
+state.relationships.push(createPerson("father", 27));
     state.name = name;
     state.country = $("countryInput").value;
     state.trait = $("traitRow").dataset.selected || (db.traits[0]?.id || "charming");
