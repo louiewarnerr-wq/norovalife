@@ -270,3 +270,15 @@ input:focus,select:focus{border-color: rgba(109,40,217,.55); box-shadow:0 0 0 3p
 }
 .agePlus{font-size:20px; line-height:1}
 .ageText{font-size:13px}
+
+.miniRel{
+  margin-top: 12px;
+  border: 1px solid var(--line);
+  background: rgba(255,255,255,.03);
+  border-radius: var(--r);
+  padding: 12px;
+}
+.miniRelTitle{
+  font-weight:900;
+  margin-bottom:10px;
+}
