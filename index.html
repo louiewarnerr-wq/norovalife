@@ -1,22 +1,126 @@
-<!DOCTYPE html>
-<html>
+<!doctype html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0b1020" />
   <title>NorovaLife</title>
-  <link rel="manifest" href="manifest.webmanifest">
-  <link rel="stylesheet" href="styles.css">
+
+  <!-- iOS “app-like” -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="stylesheet" href="styles.css" />
 </head>
+
 <body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo">N</div>
+      <div>
+        <div class="title">NorovaLife</div>
+        <div class="subtitle" id="subline">Build v0.2 (starter)</div>
+      </div>
+    </div>
+    <button class="btn ghost" id="btnSettings" aria-label="Settings">⚙️</button>
+  </header>
 
-<h1>NorovaLife</h1>
+  <main class="wrap">
+    <section class="card" id="setupCard">
+      <h2>Create your character</h2>
+      <div class="grid">
+        <label>
+          Name
+          <input id="nameInput" placeholder="e.g., Nova" maxlength="18" />
+        </label>
+        <label>
+          Country
+          <select id="countryInput">
+            <option value="UK">UK</option>
+            <option value="USA">USA</option>
+            <option value="Canada">Canada</option>
+            <option value="Nigeria">Nigeria</option>
+            <option value="Japan">Japan</option>
+          </select>
+        </label>
+      </div>
 
-<div id="stats"></div>
+      <div class="traits">
+        <div class="muted">Pick 1 trait:</div>
+        <div class="pillrow" id="traitRow"></div>
+      </div>
 
-<button onclick="ageUp()">AGE +1</button>
+      <div class="row">
+        <button class="btn" id="btnStart">Start Life</button>
+        <button class="btn ghost" id="btnDemo">Demo</button>
+      </div>
 
-<div id="event"></div>
+      <p class="muted small">
+        After deploying to Vercel, install on iPhone: <b>Safari → Share → Add to Home Screen</b>.
+      </p>
+    </section>
 
-<script src="app.js"></script>
+    <section class="card hidden" id="gameCard">
+      <div class="profile">
+        <div>
+          <div class="who" id="whoLine">—</div>
+          <div class="muted" id="metaLine">—</div>
+        </div>
+        <button class="btn age" id="btnAge">AGE +1</button>
+      </div>
+
+      <div class="stats" id="statsGrid"></div>
+
+      <hr class="sep" />
+
+      <div class="event">
+        <div class="eventTitle" id="eventTitle">Press AGE</div>
+        <div class="eventText" id="eventText">Your life begins…</div>
+        <div class="choices" id="choices"></div>
+      </div>
+
+      <hr class="sep" />
+
+      <div class="row">
+        <button class="btn ghost" id="btnSave">Save</button>
+        <button class="btn ghost" id="btnReset">Reset</button>
+      </div>
+      <p class="muted small" id="saveHint"></p>
+    </section>
+
+    <section class="modal hidden" id="settingsModal" role="dialog" aria-modal="true">
+      <div class="modalCard">
+        <div class="modalHeader">
+          <h3>Settings</h3>
+          <button class="btn ghost" id="btnCloseSettings" aria-label="Close">✖</button>
+        </div>
+
+        <div class="row">
+          <label class="toggle">
+            <input type="checkbox" id="toggleHaptics" />
+            <span>Haptics (vibrate on choice)</span>
+          </label>
+        </div>
+
+        <div class="row">
+          <label class="toggle">
+            <input type="checkbox" id="toggleHardMode" />
+            <span>Hard mode (harsher outcomes)</span>
+          </label>
+        </div>
+
+        <p class="muted small">
+          Expand the game by adding more entries in <code>events.json</code>.
+        </p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="foot muted small">
+    © <span id="year"></span> NorovaLife • <a href="privacy.html">Privacy</a> • <a href="support.html">Support</a>
+  </footer>
+
+  <script src="app.js"></script>
 </body>
 </html>
