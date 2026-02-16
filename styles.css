@@ -282,3 +282,40 @@ input:focus,select:focus{border-color: rgba(109,40,217,.55); box-shadow:0 0 0 3p
   font-weight:900;
   margin-bottom:10px;
 }
+
+/* Life feed (BitLife-style log) */
+.feed{
+  margin-top: 12px;
+  border: 1px solid var(--line);
+  background: rgba(255,255,255,.03);
+  border-radius: var(--r);
+  overflow: hidden;
+}
+
+.feedItem{
+  padding: 10px 12px;
+  border-top: 1px solid var(--line);
+}
+
+.feedItem:first-child{ border-top:none; }
+
+.feedTop{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  font-weight:900;
+  font-size:13px;
+}
+
+.feedAge{
+  color: var(--muted);
+  font-weight:900;
+  white-space:nowrap;
+}
+
+.feedText{
+  margin-top:6px;
+  color: rgba(238,242,255,.90);
+  line-height:1.35;
+  font-size:13px;
+}
