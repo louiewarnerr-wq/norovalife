@@ -240,6 +240,7 @@ function renderAll(){
   renderProfile();
   renderStats();
   renderRelationships();
+  renderMiniRelationships();   // ← ADD IT HERE
 }
 
 /* ---------- Event Engine ---------- */
