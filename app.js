@@ -404,9 +404,21 @@ state.relationships.push(createPerson("father", 27));
     wireUI();
 
     const existing = loadGame();
-    if(existing){
-      state = existing;
-      showGame();
+if(existing){
+  state = existing;
+
+  // 🔥 ADD THIS — ensure relationships exist in old saves
+  if(!Array.isArray(state.relationships)){
+    state.relationships = [];
+  }
+
+  // If no parents exist, create them
+  if(state.relationships.length === 0){
+    state.relationships.push(createPerson("mother", 25));
+    state.relationships.push(createPerson("father", 27));
+  }
+
+  showGame();
       if($("eventTitle")) $("eventTitle").textContent = "Welcome back";
       if($("eventText")) $("eventText").textContent = "Press AGE to continue your life.";
       if($("choices")) $("choices").innerHTML = "";
