@@ -15,8 +15,8 @@
 </head>
 
 <body>
-  <!-- Top App Bar -->
-  <header class="topbar">
+  <!-- Top App Bar (safe area) -->
+  <header class="topbar safePad">
     <div class="brand">
       <div class="logo">N</div>
       <div class="brandText">
@@ -24,13 +24,15 @@
         <div class="subtitle" id="subline">Life sim • v0.2</div>
       </div>
     </div>
+
     <button class="iconBtn" id="btnSettings" aria-label="Settings" title="Settings">
       <span class="icon">⚙️</span>
     </button>
   </header>
 
-  <!-- Main -->
-  <main class="wrap">
+  <!-- Main (safe area) -->
+  <main class="wrap safePad">
+
     <!-- Setup -->
     <section class="card setup" id="setupCard">
       <div class="cardHeader">
@@ -78,7 +80,6 @@
     <!-- Game -->
     <section class="card game hidden" id="gameCard">
 
-      <!-- Profile row -->
       <div class="profileRow">
         <div class="profileLeft">
           <div class="who" id="whoLine">—</div>
@@ -91,7 +92,6 @@
         </button>
       </div>
 
-      <!-- Stats -->
       <div class="statsWrap">
         <div class="statsHeader">
           <div class="sectionTitle">Stats</div>
@@ -100,17 +100,16 @@
         <div class="stats" id="statsGrid"></div>
       </div>
 
-      <!-- Event -->
       <div class="eventCard">
         <div class="eventTop">
           <div class="eventTitle" id="eventTitle">Press AGE</div>
           <div class="badge" id="eventBadge">Event</div>
         </div>
+
         <div class="eventText" id="eventText">Your life begins…</div>
         <div class="choices" id="choices"></div>
       </div>
 
-      <!-- Bottom actions -->
       <div class="bottomRow">
         <button class="btn subtle" id="btnSave">Save</button>
         <button class="btn subtle danger" id="btnReset">Reset</button>
@@ -155,9 +154,10 @@
         </div>
       </div>
     </section>
+
   </main>
 
-  <footer class="foot muted small">
+  <footer class="foot muted small safePad">
     © <span id="year"></span> NorovaLife • <a href="privacy.html">Privacy</a> • <a href="support.html">Support</a>
   </footer>
 
