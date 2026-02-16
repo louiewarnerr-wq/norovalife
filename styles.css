@@ -1,8 +1,0 @@
-body{margin:0;font-family:-apple-system;background:#f4f6fb}
-.topbar{background:#d81f26;color:white;padding:15px;text-align:center}
-main{padding:15px;max-width:600px;margin:auto}
-button{padding:10px;margin-top:10px;font-weight:bold}
-.ageBtn{background:#1db954;color:white;width:100%}
-.feed{margin-top:15px;display:flex;flex-direction:column;gap:8px}
-.feedEntry{background:white;padding:10px;border-radius:8px;border:1px solid #ddd}
-.hidden{display:none}
