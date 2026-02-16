@@ -67,17 +67,88 @@ function resetAll(){
 /* ---------- Relationships ---------- */
 function makePerson(type){
   const id = (crypto?.randomUUID ? crypto.randomUUID() : String(Date.now()+rnd()));
-  const names = ["Alex","Jamie","Taylor","Jordan","Sam","Avery","Morgan","Riley","Casey","Harper","Kai","Zara","Amir","Mila","Noah"];
+
+  // Decide “gender-ish” name pool based on relationship type
+  const wantFemale = (type === "mother");
+  const wantMale   = (type === "father");
+
+  // Pick a culture based on your current country
+  const c = (state?.country || "United Kingdom").toLowerCase();
+
+  // --- Name banks (expand anytime) ---
+  const BANK = {
+    uk: {
+      female: ["Olivia","Amelia","Isla","Ava","Emily","Sophia","Grace","Ella","Freya","Mia","Chloe","Lily"],
+      male:   ["Oliver","George","Noah","Arthur","Leo","Harry","Jack","Charlie","Theodore","Oscar","Jacob","Freddie"],
+      last:   ["Smith","Jones","Taylor","Brown","Williams","Wilson","Davies","Evans","Thomas","Roberts","Walker","Wright"]
+    },
+    usa: {
+      female: ["Emma","Olivia","Ava","Sophia","Isabella","Mia","Charlotte","Amelia","Harper","Evelyn","Abigail","Luna"],
+      male:   ["Liam","Noah","Oliver","Elijah","James","William","Benjamin","Lucas","Henry","Theodore","Jack","Levi"],
+      last:   ["Smith","Johnson","Williams","Brown","Jones","Miller","Davis","Garcia","Rodriguez","Wilson","Martinez","Anderson"]
+    },
+    ireland: {
+      female: ["Aoife","Niamh","Saoirse","Ciara","Orla","Maeve","Aisling","Roisin","Siobhan","Clodagh","Eimear","Grainne"],
+      male:   ["Conor","Sean","Cian","Oisin","Finn","Ronan","Darragh","Eoghan","Cathal","Tadhg","Liam","Fionn"],
+      last:   ["Murphy","Kelly","O'Sullivan","Walsh","Smith","O'Brien","Byrne","Ryan","O'Connor","Doyle","McCarthy","Gallagher"]
+    },
+    nigeria: {
+      female: ["Chioma","Zainab","Amina","Temilade","Adaeze","Sade","Funke","Halima","Ifeoma","Bolanle","Hauwa","Ngozi"],
+      male:   ["Chinedu","Emeka","Ibrahim","Tunde","Babatunde","Ahmed","Uche","Oluwaseun","Kelechi","Sani","Abdul","Kunle"],
+      last:   ["Okafor","Balogun","Adeyemi","Ibrahim","Abubakar","Okoye","Ogunleye","Mohammed","Nwankwo","Yakubu","Adebayo","Eze"]
+    },
+    japan: {
+      // Use common romaji for simplicity; you can swap to kana/kanji later
+      female: ["Yui","Aoi","Hina","Sakura","Rin","Mio","Akari","Nanami","Hana","Haruka","Mei","Yuna"],
+      male:   ["Haruto","Yuto","Sota","Ren","Yuki","Kaito","Daiki","Ryota","Takumi","Riku","Sho","Hinata"],
+      last:   ["Sato","Suzuki","Takahashi","Tanaka","Watanabe","Ito","Yamamoto","Nakamura","Kobayashi","Kato","Yoshida","Yamada"]
+    },
+    india: {
+      female: ["Aanya","Anaya","Isha","Diya","Saanvi","Priya","Kavya","Meera","Riya","Anjali","Aditi","Nisha"],
+      male:   ["Arjun","Aarav","Vihaan","Aditya","Rohan","Rahul","Karan","Ishaan","Kabir","Siddharth","Vivek","Neel"],
+      last:   ["Sharma","Verma","Patel","Gupta","Singh","Kumar","Reddy","Nair","Iyer","Mehta","Chopra","Jain"]
+    },
+    arab: {
+      female: ["Fatima","Aisha","Layla","Mariam","Noor","Sara","Yasmin","Zahra","Hana","Rania","Amira","Salma"],
+      male:   ["Mohammed","Ahmed","Omar","Ali","Hassan","Yusuf","Ibrahim","Khalid","Amir","Nabil","Karim","Saeed"],
+      last:   ["Al-Farsi","Al-Harbi","Al-Mansoori","Al-Qahtani","Haddad","Nasser","Salem","Khan","Rahman","Hussein","Abdullah","Mahmoud"]
+    }
+  };
+
+  function cultureKeyFromCountry(countryLower){
+    if(countryLower.includes("united kingdom") || countryLower === "uk" || countryLower.includes("england") || countryLower.includes("scotland") || countryLower.includes("wales")) return "uk";
+    if(countryLower.includes("united states") || countryLower.includes("usa")) return "usa";
+    if(countryLower.includes("ireland")) return "ireland";
+    if(countryLower.includes("nigeria")) return "nigeria";
+    if(countryLower.includes("japan")) return "japan";
+    if(countryLower.includes("india")) return "india";
+    if(countryLower.includes("united arab emirates") || countryLower.includes("saudi") || countryLower.includes("qatar") || countryLower.includes("kuwait") || countryLower.includes("jordan") || countryLower.includes("lebanon")) return "arab";
+    return "uk"; // default fallback vibe
+  }
+
+  const key = cultureKeyFromCountry(c);
+  const pool = BANK[key] || BANK.uk;
+
+  const female = pool.female;
+  const male   = pool.male;
+  const last   = pool.last;
+
+  const first =
+    wantFemale ? pick(female)
+    : wantMale ? pick(male)
+    : pick([...female, ...male]);
+
+  const full = `${first} ${pick(last)}`;
+
   return {
     id,
     type,
-    name: type === "mother" ? "Mother" : type === "father" ? "Father" : pick(names),
+    name: full,
     closeness: 60,
     trust: 60,
     respect: 60
   };
 }
-
 function ensureParents(){
   const hasMom = state.relationships.some(r=>r.type==="mother");
   const hasDad = state.relationships.some(r=>r.type==="father");
