@@ -6,9 +6,13 @@ let state = null;
 let settings = { haptics: true, hardMode: false };
 
 const $ = (id) => document.getElementById(id);
+const clamp = (n, min, max) => Math.max(min, Math.min(max, n));
 
-function clamp(n, min, max){ return Math.max(min, Math.min(max, n)); }
-function rndInt(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
+function showFatal(msg){
+  alert(msg);
+  const sub = $("subline");
+  if(sub) sub.textContent = "ERROR: " + msg;
+}
 
 function vib(){
   try{
@@ -28,31 +32,28 @@ function defaultState(){
   };
 }
 
+function saveSettings(){
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+}
 function loadSettings(){
   try{
     const raw = localStorage.getItem(SETTINGS_KEY);
     if(raw) settings = { ...settings, ...JSON.parse(raw) };
   }catch{}
-  $("toggleHaptics").checked = !!settings.haptics;
-  $("toggleHardMode").checked = !!settings.hardMode;
-}
-function saveSettings(){
-  localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+  if($("toggleHaptics")) $("toggleHaptics").checked = !!settings.haptics;
+  if($("toggleHardMode")) $("toggleHardMode").checked = !!settings.hardMode;
 }
 
 function saveGame(){
   if(!state) return;
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  $("saveHint").textContent = `Saved • ${new Date().toLocaleString()}`;
+  if($("saveHint")) $("saveHint").textContent = `Saved • ${new Date().toLocaleString()}`;
 }
 function loadGame(){
   try{
     const raw = localStorage.getItem(STORAGE_KEY);
-    if(!raw) return null;
-    return JSON.parse(raw);
-  }catch{
-    return null;
-  }
+    return raw ? JSON.parse(raw) : null;
+  }catch{ return null; }
 }
 function resetGame(){
   localStorage.removeItem(STORAGE_KEY);
@@ -61,19 +62,20 @@ function resetGame(){
 }
 
 function showSetup(){
-  $("setupCard").classList.remove("hidden");
-  $("gameCard").classList.add("hidden");
-  $("subline").textContent = "Life simulator (starter)";
+  $("setupCard")?.classList.remove("hidden");
+  $("gameCard")?.classList.add("hidden");
+  if($("subline")) $("subline").textContent = "Life sim • v0.2";
 }
 function showGame(){
-  $("setupCard").classList.add("hidden");
-  $("gameCard").classList.remove("hidden");
+  $("setupCard")?.classList.add("hidden");
+  $("gameCard")?.classList.remove("hidden");
   renderProfile();
   renderStats();
-  $("saveHint").textContent = "Autosaves after each year.";
+  if($("saveHint")) $("saveHint").textContent = "Autosaves after each year.";
 }
 
 function renderProfile(){
+  if(!$("whoLine") || !$("metaLine")) return;
   $("whoLine").textContent = `${state.name} • Age ${state.age}`;
   const traitName = (db.traits.find(t=>t.id===state.trait)?.name) || state.trait;
   $("metaLine").textContent = `${state.country} • Trait: ${traitName}`;
@@ -86,6 +88,9 @@ function statBarPct(key){
 }
 
 function renderStats(){
+  const grid = $("statsGrid");
+  if(!grid) return;
+
   const stats = [
     ["health","Health"],
     ["happiness","Happiness"],
@@ -95,12 +100,15 @@ function renderStats(){
     ["karma","Karma"],
   ];
 
-  $("statsGrid").innerHTML = stats.map(([k,label])=>{
+  grid.innerHTML = stats.map(([k,label])=>{
     const val = state.stats[k];
     const pct = statBarPct(k);
     return `
       <div class="stat">
-        <div class="statTop"><span>${label}</span><span>${k==="money" ? "$"+val : val}</span></div>
+        <div class="statTop">
+          <span>${label}</span>
+          <span>${k==="money" ? (state.country==="UK"?"£":"$")+val : val}</span>
+        </div>
         <div class="bar"><div class="fill" style="width:${pct}%"></div></div>
       </div>
     `;
@@ -108,18 +116,16 @@ function renderStats(){
 }
 
 function formatText(t){
-  return t.replaceAll("{country}", state.country).replaceAll("{name}", state.name);
+  return (t||"").replaceAll("{country}", state.country).replaceAll("{name}", state.name);
 }
 
 function meetsRequirements(ev){
   const req = ev.requirements || {};
   const st = state.stats;
-
   if(typeof req.minMoney === "number" && st.money < req.minMoney) return false;
   if(typeof req.maxMoney === "number" && st.money > req.maxMoney) return false;
   if(typeof req.minKarma === "number" && st.karma < req.minKarma) return false;
   if(typeof req.maxKarma === "number" && st.karma > req.maxKarma) return false;
-
   return true;
 }
 
@@ -129,13 +135,7 @@ function traitBoostForEvent(ev){
   const tags = ev.tags || [];
   const boostTags = tr.boostTags || [];
   const hits = tags.filter(tag => boostTags.includes(tag)).length;
-  // each matching tag boosts weight a bit
   return 1 + hits * 0.35;
-}
-
-function hardModeMultiplier(ev){
-  // Hard mode doesn’t change event selection, only effects slightly later
-  return settings.hardMode ? 1.15 : 1.0;
 }
 
 function pickEvent(){
@@ -143,12 +143,11 @@ function pickEvent(){
   const candidates = db.events
     .filter(ev => age >= ev.ageMin && age <= ev.ageMax)
     .filter(meetsRequirements)
-    .filter(ev => ev.id !== state.lastEventId); // avoid immediate repeats
+    .filter(ev => ev.id !== state.lastEventId);
 
-  // fallback
   const list = candidates.length ? candidates : db.events;
+  if(!list.length) return null;
 
-  // weighted pick
   let total = 0;
   const weighted = list.map(ev=>{
     const base = (typeof ev.weight === "number" ? ev.weight : 10);
@@ -167,13 +166,12 @@ function pickEvent(){
 
 function applyEffects(effects){
   if(!effects) return;
-  const mult = hardModeMultiplier();
+  const mult = settings.hardMode ? 1.15 : 1.0;
   for(const [k,v] of Object.entries(effects)){
     if(!(k in state.stats)) continue;
     if(k === "money"){
       state.stats.money = Math.round(state.stats.money + v);
     }else{
-      // make hard mode harsher by scaling negatives a bit
       const val = (v < 0) ? Math.round(v * mult) : v;
       state.stats[k] = clamp(state.stats[k] + val, 0, 100);
     }
@@ -183,27 +181,36 @@ function applyEffects(effects){
 function checkDeath(){
   if(state.stats.health <= 0){
     state.alive = false;
-    $("eventTitle").textContent = "You died";
-    $("eventText").textContent = "Your health reached 0. Your story ends here.";
-    $("choices").innerHTML = `
-      <button class="choiceBtn" id="btnRestart">Start a new life</button>
-    `;
-    $("btnRestart").onclick = () => resetGame();
+    if($("eventTitle")) $("eventTitle").textContent = "You died";
+    if($("eventText")) $("eventText").textContent = "Your health reached 0. Your story ends here.";
+    if($("choices")){
+      $("choices").innerHTML = `<button class="choiceBtn" id="btnRestart">Start a new life</button>`;
+      $("btnRestart").onclick = resetGame;
+    }
     return true;
   }
   return false;
 }
 
 function showEvent(ev){
+  if(!ev) return;
   state.lastEventId = ev.id;
-  $("eventTitle").textContent = ev.title;
-  $("eventText").textContent = formatText(ev.text);
 
-  $("choices").innerHTML = ev.choices.map((c, idx)=>(
+  if($("eventTitle")) $("eventTitle").textContent = ev.title || "Event";
+  if($("eventText")) $("eventText").textContent = formatText(ev.text || "");
+  if($("eventBadge")){
+    const tag = (ev.tags && ev.tags[0]) ? ev.tags[0] : "Event";
+    $("eventBadge").textContent = tag.toUpperCase();
+  }
+
+  const choicesWrap = $("choices");
+  if(!choicesWrap) return;
+
+  choicesWrap.innerHTML = (ev.choices || []).map((c, idx)=>(
     `<button class="choiceBtn" data-idx="${idx}">${c.label}</button>`
   )).join("");
 
-  [...$("choices").querySelectorAll("button")].forEach(btn=>{
+  [...choicesWrap.querySelectorAll("button")].forEach(btn=>{
     btn.addEventListener("click", ()=>{
       vib();
       const idx = Number(btn.dataset.idx);
@@ -212,9 +219,6 @@ function showEvent(ev){
       renderProfile();
       renderStats();
       if(!checkDeath()){
-        // small “after choice” message
-        $("eventText").textContent = formatText(ev.text) + " (Choice made.)";
-        // autosave after resolving
         saveGame();
       }
     });
@@ -225,7 +229,6 @@ function ageUp(){
   if(!state?.alive) return;
   state.age += 1;
 
-  // small passive drift
   state.stats.happiness = clamp(state.stats.happiness - 1, 0, 100);
   if(state.age > 35) state.stats.health = clamp(state.stats.health - 1, 0, 100);
 
@@ -234,49 +237,47 @@ function ageUp(){
 
   renderProfile();
   renderStats();
-
-  // autosave each year too
   saveGame();
 }
 
 function buildTraitPicker(){
   const row = $("traitRow");
+  if(!row) return;
+
   row.innerHTML = "";
-  db.traits.forEach(tr=>{
+  db.traits.forEach((tr, i)=>{
     const el = document.createElement("button");
-    el.className = "pill";
+    el.type = "button";
+    el.className = "pill" + (i===0 ? " active" : "");
     el.textContent = tr.name;
     el.onclick = ()=>{
       [...row.querySelectorAll(".pill")].forEach(p=>p.classList.remove("active"));
       el.classList.add("active");
-      $("traitRow").dataset.selected = tr.id;
+      row.dataset.selected = tr.id;
     };
     row.appendChild(el);
   });
-  // default active
-  const first = row.querySelector(".pill");
-  if(first){
-    first.classList.add("active");
-    row.dataset.selected = db.traits[0].id;
-  }
+  if(db.traits[0]) row.dataset.selected = db.traits[0].id;
 }
 
 async function loadDB(){
   const res = await fetch("events.json", { cache: "no-store" });
+  if(!res.ok) throw new Error("events.json not found (status " + res.status + ")");
   db = await res.json();
+  if(!db.events || !Array.isArray(db.events)) throw new Error("events.json missing 'events' array");
+  if(!db.traits || !Array.isArray(db.traits)) db.traits = [];
 }
 
 function wireUI(){
-  $("year").textContent = new Date().getFullYear();
+  if($("year")) $("year").textContent = new Date().getFullYear();
 
   $("btnAge").onclick = ageUp;
-
   $("btnSave").onclick = saveGame;
   $("btnReset").onclick = resetGame;
 
-  $("btnSettings").onclick = ()=> $("settingsModal").classList.remove("hidden");
-  $("btnCloseSettings").onclick = ()=> $("settingsModal").classList.add("hidden");
-  $("settingsModal").addEventListener("click", (e)=>{
+  $("btnSettings").onclick = ()=> $("settingsModal")?.classList.remove("hidden");
+  $("btnCloseSettings").onclick = ()=> $("settingsModal")?.classList.add("hidden");
+  $("settingsModal")?.addEventListener("click", (e)=>{
     if(e.target === $("settingsModal")) $("settingsModal").classList.add("hidden");
   });
 
@@ -284,23 +285,21 @@ function wireUI(){
   $("toggleHardMode").onchange = (e)=>{ settings.hardMode = e.target.checked; saveSettings(); };
 
   $("btnDemo").onclick = ()=>{
-    $("nameInput").value = ["Nova","Noah","Ava","Mila","Kai"][rndInt(0,4)];
-    $("countryInput").value = ["UK","USA","Canada","Nigeria","Japan"][rndInt(0,4)];
+    if($("nameInput")) $("nameInput").value = ["Nova","Noah","Ava","Mila","Kai"][Math.floor(Math.random()*5)];
+    if($("countryInput")) $("countryInput").value = ["UK","USA","Canada","Nigeria","Japan"][Math.floor(Math.random()*5)];
   };
 
   $("btnStart").onclick = ()=>{
     const name = $("nameInput").value.trim();
-    if(!name){
-      alert("Add a name first.");
-      return;
-    }
+    if(!name){ alert("Add a name first."); return; }
+
     state = defaultState();
     state.name = name;
     state.country = $("countryInput").value;
-    state.trait = $("traitRow").dataset.selected || db.traits[0]?.id || "charming";
+    state.trait = $("traitRow").dataset.selected || (db.traits[0]?.id || "charming");
 
     showGame();
-    // show birth event immediately
+
     const born = db.events.find(e=>e.ageMin===0 && e.ageMax===0) || pickEvent();
     showEvent(born);
     saveGame();
@@ -308,21 +307,24 @@ function wireUI(){
 }
 
 (async function init(){
-  loadSettings();
-  await loadDB();
-  buildTraitPicker();
-  wireUI();
+  try{
+    loadSettings();
+    await loadDB();
+    buildTraitPicker();
+    wireUI();
 
-  const existing = loadGame();
-  if(existing){
-    state = existing;
-    showGame();
-    renderProfile();
-    renderStats();
-    $("eventTitle").textContent = "Welcome back";
-    $("eventText").textContent = "Press AGE to continue your life.";
-    $("choices").innerHTML = "";
-  }else{
-    showSetup();
+    const existing = loadGame();
+    if(existing){
+      state = existing;
+      showGame();
+      if($("eventTitle")) $("eventTitle").textContent = "Welcome back";
+      if($("eventText")) $("eventText").textContent = "Press AGE to continue your life.";
+      if($("choices")) $("choices").innerHTML = "";
+    }else{
+      showSetup();
+    }
+  }catch(err){
+    console.error(err);
+    showFatal(String(err.message || err));
   }
 })();
