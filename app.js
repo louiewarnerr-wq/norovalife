@@ -465,6 +465,30 @@ function renderCountryPicker(){
   sel.value = "United Kingdom";
 }
 
+function renderMiniRelationships(){
+  const el = $("miniRel");
+  if(!el) return;
+
+  const parents = (state.relationships||[]).filter(r => r.type === "mother" || r.type === "father");
+  if(parents.length === 0){
+    el.innerHTML = "";
+    return;
+  }
+
+  const bar = (v)=>`<div class="bar"><div class="fill" style="width:${clamp(v,0,100)}%"></div></div>`;
+
+  el.innerHTML = `
+    <div class="miniRelTitle">Parents</div>
+    ${parents.map(p=>`
+      <div class="stat">
+        <div class="statName">${p.name}</div>
+        ${bar(p.closeness)}
+        <div class="statVal">${p.closeness}</div>
+      </div>
+    `).join("")}
+  `;
+}
+
 /* ---------- Init ---------- */
 function wireUI(){
   document.querySelectorAll(".navBtn").forEach(btn=>{
