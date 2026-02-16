@@ -304,6 +304,57 @@ async function loadDB(){
   if(!db.traits || !Array.isArray(db.traits)) db.traits = [];
 }
 
+function renderRelationships(){
+  const container = document.getElementById("relationshipsList");
+  if(!container || !state) return;
+
+  // If you haven't created relationships yet, show a hint instead of crashing
+  if(!Array.isArray(state.relationships) || state.relationships.length === 0){
+    container.innerHTML = `<div class="muted small">No relationships yet.</div>`;
+    return;
+  }
+
+  container.innerHTML = state.relationships.map(r => `
+    <div class="relCard">
+      <div class="relTop">
+        <b>${r.name}</b>
+        <span class="muted small">${r.type}</span>
+      </div>
+
+      <div class="relBars muted small">
+        <div>Closeness: ${r.closeness}</div>
+        <div>Trust: ${r.trust}</div>
+        <div>Respect: ${r.respect}</div>
+      </div>
+
+      <button class="choiceBtn relBtn" data-id="${r.id}">Spend time</button>
+    </div>
+  `).join("");
+
+  // Wire buttons
+  container.querySelectorAll(".relBtn").forEach(btn => {
+    btn.onclick = () => {
+      const id = btn.dataset.id;
+      const person = state.relationships.find(p => p.id === id);
+      if(!person) return;
+
+      // Effects
+      person.closeness = clamp(person.closeness + 5, 0, 100);
+      person.trust = clamp(person.trust + 3, 0, 100);
+      person.respect = clamp(person.respect + 1, 0, 100);
+
+      // Small player benefit
+      if(state.stats?.happiness !== undefined){
+        state.stats.happiness = clamp(state.stats.happiness + 2, 0, 100);
+      }
+
+      renderRelationships();
+      renderStats();
+      saveGame();
+    };
+  });
+}
+
 function wireUI(){
   if($("year")) $("year").textContent = new Date().getFullYear();
 
