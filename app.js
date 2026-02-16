@@ -4,9 +4,10 @@
    - Relationships: parents + friends + actions
    - Scalable event format: requirements, flags, risk, addRelationship
    - Added: gender + name auto-gen + parents share player last name
+   - Added: LIFE FEED (BitLife-style long log)
 */
 
-const SAVE_KEY = "norovalife_save_v101";
+const SAVE_KEY = "norovalife_save_v102";
 
 const $ = (id) => document.getElementById(id);
 const clamp = (n,min,max) => Math.max(min, Math.min(max, n));
@@ -107,15 +108,17 @@ function generateFullName(country, gender){
 /* ---------- State ---------- */
 function defaultState(){
   return {
-    // player name split
-    name: "",      // first name
-    lastName: "",  // last name
+    name: "",
+    lastName: "",
     gender: "female",
 
     country: "United Kingdom",
     trait: "charming",
     age: 0,
     alive: true,
+
+    // ✅ Life feed
+    feed: [],
 
     stats: {
       health: 80,
@@ -147,12 +150,48 @@ function resetAll(){
   location.reload();
 }
 
+/* ---------- Life Feed ---------- */
+function addToFeed(title, text){
+  state.feed ||= [];
+  state.feed.unshift({
+    age: state.age,
+    title: String(title || "Life"),
+    text: String(text || ""),
+    t: Date.now()
+  });
+  renderFeed();
+}
+
+function renderFeed(){
+  const el = $("lifeFeed");
+  if(!el) return;
+
+  const items = state.feed || [];
+  if(items.length === 0){
+    el.innerHTML = `
+      <div class="feedItem">
+        <div class="muted tiny">Your life story will appear here.</div>
+      </div>
+    `;
+    return;
+  }
+
+  el.innerHTML = items.slice(0, 80).map(it => `
+    <div class="feedItem">
+      <div class="feedTop">
+        <div>${it.title}</div>
+        <div class="feedAge">Age ${it.age}</div>
+      </div>
+      <div class="feedText">${it.text}</div>
+    </div>
+  `).join("");
+}
+
 /* ---------- Relationships ---------- */
 function makePerson(type, forcedLastName){
   const id = (crypto?.randomUUID ? crypto.randomUUID() : String(Date.now()+rnd()));
   const country = state?.country || "United Kingdom";
 
-  // For parents, lock first name pool to gender
   let gender = "nonbinary";
   if(type === "mother") gender = "female";
   if(type === "father") gender = "male";
@@ -160,18 +199,10 @@ function makePerson(type, forcedLastName){
   const full = generateFullName(country, gender);
   const parts = splitName(full);
 
-  // Force family surname = player last name
   const last = (forcedLastName || state?.lastName || parts.last || "Smith").trim();
   const name = `${parts.first} ${last}`.trim();
 
-  return {
-    id,
-    type,
-    name,
-    closeness: 60,
-    trust: 60,
-    respect: 60
-  };
+  return { id, type, name, closeness: 60, trust: 60, respect: 60 };
 }
 
 function ensureParents(){
@@ -182,7 +213,6 @@ function ensureParents(){
 }
 
 function fixParentNamesAndSurnames(){
-  // if save had Mother/Father or wrong surname, update quietly
   const last = (state.lastName || "").trim();
   if(!last) return;
 
@@ -194,7 +224,6 @@ function fixParentNamesAndSurnames(){
     const wrongLast = parts.last && parts.last !== last;
 
     if(looksPlaceholder || wrongLast || !parts.last){
-      // keep first name if it exists and isn't placeholder; otherwise regenerate
       let first = parts.first;
       if(looksPlaceholder || !first || first.toLowerCase() === "mother" || first.toLowerCase() === "father"){
         first = splitName(generateFullName(state.country, r.type==="mother" ? "female" : "male")).first;
@@ -205,7 +234,6 @@ function fixParentNamesAndSurnames(){
 }
 
 function addFriend(){
-  // friends are not forced to share your last name
   state.relationships.push(makePerson("friend", null));
   toast("You made a new friend.");
   renderRelationships();
@@ -387,6 +415,7 @@ function renderAll(){
   renderStats();
   renderRelationships();
   renderMiniRelationships();
+  renderFeed(); // ✅ IMPORTANT
 }
 
 /* ---------- Event Engine ---------- */
@@ -494,6 +523,10 @@ function showEvent(ev){
       applyFlags(choice.flags);
       applyRisk(choice.risk);
 
+      // ✅ FEED: log event + choice
+      addToFeed(ev.title, renderedText);
+      addToFeed("You chose:", choice.label);
+
       if(choice.addRelationship?.type === "friend"){
         state.relationships.push(makePerson("friend", null));
         toast("New relationship added.");
@@ -527,6 +560,9 @@ function ageUp(){
 
   state.age += 1;
 
+  // ✅ FEED: log age
+  addToFeed("Age up", `You are now ${state.age}.`);
+
   state.stats.happiness = clamp(state.stats.happiness - 1, 0, 100);
   if(state.age > 35) state.stats.health = clamp(state.stats.health - 1, 0, 100);
 
@@ -534,6 +570,7 @@ function ageUp(){
     if(!state.relationships.some(r=>r.type==="friend")){
       state.relationships.push(makePerson("friend", null));
       toast("You made a new friend.");
+      addToFeed("New friend", "You made a new friend at school.");
     }
   }
 
@@ -550,17 +587,20 @@ function doActivity(kind){
     state.stats.intelligence = clamp(state.stats.intelligence + 2, 0, 100);
     state.stats.happiness = clamp(state.stats.happiness - 1, 0, 100);
     toast("You studied.");
+    addToFeed("Activity", "You studied.");
   }
   if(kind==="workout"){
     state.stats.health = clamp(state.stats.health + 2, 0, 100);
     state.stats.looks = clamp(state.stats.looks + 1, 0, 100);
     toast("You worked out.");
+    addToFeed("Activity", "You worked out.");
   }
   if(kind==="work"){
     const pay = 70 + Math.floor(rnd()*140);
     state.stats.money += pay;
     state.stats.happiness = clamp(state.stats.happiness - 1, 0, 100);
     toast(`You earned ${fmtMoney(pay)}.`);
+    addToFeed("Activity", `You worked and earned ${fmtMoney(pay)}.`);
   }
   if(kind==="chaos"){
     const roll = rnd();
@@ -568,10 +608,12 @@ function doActivity(kind){
       state.stats.happiness = clamp(state.stats.happiness + 3, 0, 100);
       state.stats.karma = clamp(state.stats.karma - 2, 0, 100);
       toast("You chose chaos. It was… entertaining.");
+      addToFeed("Activity", "You chose chaos. It was… entertaining.");
     }else{
       state.stats.health = clamp(state.stats.health - 3, 0, 100);
       state.stats.money = Math.round(state.stats.money - 120);
       toast("Chaos bit you back.");
+      addToFeed("Activity", "Chaos bit you back.");
     }
   }
 
@@ -611,18 +653,15 @@ function wireUI(){
 
   $("btnReset").onclick = resetAll;
 
-  // Auto-generate on country change
   $("countryInput").onchange = () => {
     const g = $("genderInput")?.value || "female";
     $("nameInput").value = generateFullName($("countryInput").value, g);
   };
 
-  // Auto-generate on gender change
   $("genderInput").onchange = () => {
     $("nameInput").value = generateFullName($("countryInput").value, $("genderInput").value);
   };
 
-  // Random button
   $("btnRandomName").onclick = () => {
     $("nameInput").value = generateFullName($("countryInput").value, $("genderInput")?.value || "female");
   };
@@ -643,7 +682,6 @@ function wireUI(){
     state.gender = $("genderInput")?.value || "female";
     state.trait = $("traitRow").dataset.selected || "charming";
 
-    // Split player name; if no last name, auto add one
     const parts = splitName(full);
     if(!parts.first) return alert("You must choose a name (or press 🎲).");
 
@@ -656,9 +694,12 @@ function wireUI(){
       state.lastName = parts.last;
     }
 
-    // Parents inherit player's last name
     state.relationships.push(makePerson("mother", state.lastName));
     state.relationships.push(makePerson("father", state.lastName));
+
+    // ✅ FEED seed
+    state.feed ||= [];
+    addToFeed("New life", `You started a new life in ${state.country}.`);
 
     save("Saved • new life");
     show("viewLife");
@@ -691,26 +732,21 @@ function wireUI(){
   renderCountryPicker();
   wireUI();
 
-  // set initial auto name
-  if($("genderInput")){
-    $("genderInput").value = "female";
-  }
-  if($("nameInput")){
-    $("nameInput").value = generateFullName($("countryInput").value, $("genderInput")?.value || "female");
-  }
+  if($("genderInput")) $("genderInput").value = "female";
+  if($("nameInput")) $("nameInput").value = generateFullName($("countryInput").value, $("genderInput")?.value || "female");
 
   const existing = load();
   if(existing){
     state = existing;
 
-    // migrate minimal
     state.stats ||= {};
     state.relationships ||= [];
     state.flags ||= {};
+    state.feed ||= []; // ✅ migrate feed
     if(!state.gender) state.gender = "female";
     if(state.lastName === undefined) state.lastName = "";
 
-    // If older saves stored full name in state.name, attempt split once
+    // older saves might have full name in state.name
     if(state.name && !state.lastName && state.name.includes(" ")){
       const parts = splitName(state.name);
       state.name = parts.first;
@@ -726,6 +762,8 @@ function wireUI(){
     $("eventText").textContent = "Press Age to continue.";
     $("choices").innerHTML = "";
 
+    // show placeholder if empty
+    renderFeed();
     save("Migrated save");
   }else{
     state = defaultState();
