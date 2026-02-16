@@ -265,12 +265,24 @@ function traitBoost(ev){
 
 function pickEvent(){
   const age = state.age;
-  const list = db.events
+
+  // ONLY pick events that match current age
+  const pool = db.events
     .filter(e => age >= e.ageMin && age <= e.ageMax)
     .filter(meetsRequirements)
     .filter(e => e.id !== state.lastEventId);
 
-  const pool = list.length ? list : db.events;
+  // If nothing matches, show a neutral filler event instead of falling back to ALL events
+  if(pool.length === 0){
+    return {
+      id: "filler_" + age,
+      title: "Another year passes",
+      text: "Nothing major happened this year.",
+      choices: [{ label: "Continue", effects: {} }]
+    };
+  }
+
+  // Weighted pick
   let total = 0;
   const weighted = pool.map(e=>{
     const base = (typeof e.weight === "number") ? e.weight : 10;
@@ -284,7 +296,7 @@ function pickEvent(){
     r -= it.w;
     if(r <= 0) return it.e;
   }
-  return weighted[weighted.length-1].e;
+  return weighted[weighted.length - 1].e;
 }
 
 function applyEffects(effects){
