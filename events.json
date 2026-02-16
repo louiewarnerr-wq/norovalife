@@ -1,0 +1,112 @@
+{
+  "events": [
+    {
+      "id": "born_001",
+      "ageMin": 0,
+      "ageMax": 0,
+      "weight": 999,
+      "title": "You were born",
+      "text": "A new life begins in {country}.",
+      "choices": [
+        { "label": "Begin", "effects": { "happiness": 2 } }
+      ]
+    },
+    {
+      "id": "uk_primary_001",
+      "ageMin": 4,
+      "ageMax": 6,
+      "weight": 14,
+      "tags": ["school"],
+      "title": "First day of primary",
+      "text": "You walk into primary school and feel nervous.",
+      "choices": [
+        { "label": "Make friends", "effects": { "happiness": 3, "karma": 1 } },
+        { "label": "Keep to yourself", "effects": { "smarts": 1, "happiness": -1 } }
+      ]
+    },
+    {
+      "id": "park_001",
+      "ageMin": 5,
+      "ageMax": 12,
+      "weight": 12,
+      "tags": ["social"],
+      "title": "Playground challenge",
+      "text": "Someone challenges you to a race.",
+      "choices": [
+        { "label": "Race them", "effects": { "health": 2, "happiness": 2 } },
+        { "label": "Ignore it", "effects": { "happiness": -1 } }
+      ]
+    },
+    {
+      "id": "homework_001",
+      "ageMin": 6,
+      "ageMax": 12,
+      "weight": 14,
+      "tags": ["school"],
+      "title": "Homework trouble",
+      "text": "You forgot your homework.",
+      "choices": [
+        { "label": "Tell the truth", "effects": { "smarts": 1, "karma": 2, "happiness": -1 } },
+        { "label": "Make an excuse", "effects": { "karma": -2, "happiness": 1 } }
+      ]
+    },
+    {
+      "id": "nhs_001",
+      "ageMin": 1,
+      "ageMax": 90,
+      "weight": 10,
+      "tags": ["health"],
+      "title": "NHS appointment",
+      "text": "You feel ill and book an NHS appointment.",
+      "choices": [
+        { "label": "Rest and recover", "effects": { "health": 4, "happiness": 1 } },
+        { "label": "Ignore it", "effects": { "health": -4 } }
+      ]
+    },
+    {
+      "id": "teen_party_001",
+      "ageMin": 13,
+      "ageMax": 19,
+      "weight": 12,
+      "tags": ["social"],
+      "title": "Party invite",
+      "text": "You get invited to a party this weekend.",
+      "choices": [
+        { "label": "Go", "effects": { "happiness": 4, "health": -1 } },
+        { "label": "Stay in", "effects": { "smarts": 2, "happiness": -1 } }
+      ]
+    },
+    {
+      "id": "side_hustle_001",
+      "ageMin": 16,
+      "ageMax": 60,
+      "weight": 14,
+      "tags": ["money"],
+      "title": "Side hustle",
+      "text": "You see a quick way to earn extra money.",
+      "choices": [
+        { "label": "Do it honestly", "effects": { "money": 120, "karma": 1 } },
+        { "label": "Cut corners", "effects": { "money": 220, "karma": -3, "health": -1 } }
+      ]
+    },
+    {
+      "id": "promotion_001",
+      "ageMin": 20,
+      "ageMax": 60,
+      "weight": 12,
+      "tags": ["career"],
+      "title": "Promotion chance",
+      "text": "Your manager is watching your work closely.",
+      "choices": [
+        { "label": "Work hard", "effects": { "smarts": 1, "money": 300, "happiness": -1 } },
+        { "label": "Slack off", "effects": { "money": -200, "happiness": 2 } }
+      ]
+    }
+  ],
+  "traits": [
+    { "id": "charming", "name": "Charming", "boostTags": ["social"] },
+    { "id": "studious", "name": "Studious", "boostTags": ["school", "career"] },
+    { "id": "hustler", "name": "Hustler", "boostTags": ["money"] },
+    { "id": "tough", "name": "Tough", "boostTags": ["health"] }
+  ]
+}
