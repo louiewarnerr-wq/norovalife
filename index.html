@@ -29,12 +29,24 @@
         <div class="grid2">
           <label class="field">
             <span>Name</span>
-            <input id="nameInput" placeholder="e.g., Nova" maxlength="18" />
+            <div style="display:flex; gap:10px;">
+              <input id="nameInput" placeholder="e.g., Nova Smith" maxlength="24" style="flex:1;" />
+              <button class="btn small" type="button" id="btnRandomName" aria-label="Randomize name">🎲</button>
+            </div>
           </label>
 
           <label class="field">
             <span>Country</span>
             <select id="countryInput"></select>
+          </label>
+
+          <label class="field">
+            <span>Gender</span>
+            <select id="genderInput">
+              <option value="female">Female</option>
+              <option value="male">Male</option>
+              <option value="nonbinary">Non-binary</option>
+            </select>
           </label>
         </div>
 
