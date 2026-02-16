@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#0b1020" />
+  <meta name="theme-color" content="#0a0f1f" />
   <title>NorovaLife</title>
 
-  <!-- iOS “app-like” -->
+  <!-- iOS app-like -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
@@ -15,27 +15,37 @@
 </head>
 
 <body>
+  <!-- Top App Bar -->
   <header class="topbar">
     <div class="brand">
       <div class="logo">N</div>
-      <div>
+      <div class="brandText">
         <div class="title">NorovaLife</div>
-        <div class="subtitle" id="subline">Build v0.2 (starter)</div>
+        <div class="subtitle" id="subline">Life sim • v0.2</div>
       </div>
     </div>
-    <button class="btn ghost" id="btnSettings" aria-label="Settings">⚙️</button>
+    <button class="iconBtn" id="btnSettings" aria-label="Settings" title="Settings">
+      <span class="icon">⚙️</span>
+    </button>
   </header>
 
+  <!-- Main -->
   <main class="wrap">
-    <section class="card" id="setupCard">
-      <h2>Create your character</h2>
-      <div class="grid">
-        <label>
-          Name
+    <!-- Setup -->
+    <section class="card setup" id="setupCard">
+      <div class="cardHeader">
+        <h2>Create your character</h2>
+        <p class="muted">Start small. Build your story year by year.</p>
+      </div>
+
+      <div class="formGrid">
+        <label class="field">
+          <span class="fieldLabel">Name</span>
           <input id="nameInput" placeholder="e.g., Nova" maxlength="18" />
         </label>
-        <label>
-          Country
+
+        <label class="field">
+          <span class="fieldLabel">Country</span>
           <select id="countryInput">
             <option value="UK">UK</option>
             <option value="USA">USA</option>
@@ -47,72 +57,102 @@
       </div>
 
       <div class="traits">
-        <div class="muted">Pick 1 trait:</div>
+        <div class="traitsHead">
+          <div class="muted">Pick 1 trait</div>
+          <div class="hint">It slightly boosts certain event types.</div>
+        </div>
         <div class="pillrow" id="traitRow"></div>
       </div>
 
-      <div class="row">
-        <button class="btn" id="btnStart">Start Life</button>
-        <button class="btn ghost" id="btnDemo">Demo</button>
+      <div class="actions">
+        <button class="btn primary" id="btnStart">Start Life</button>
+        <button class="btn" id="btnDemo">Demo</button>
       </div>
 
-      <p class="muted small">
-        After deploying to Vercel, install on iPhone: <b>Safari → Share → Add to Home Screen</b>.
-      </p>
+      <div class="installTip">
+        <div class="installTitle">Install on iPhone</div>
+        <div class="installText">Safari → Share → <b>Add to Home Screen</b></div>
+      </div>
     </section>
 
-    <section class="card hidden" id="gameCard">
-      <div class="profile">
-        <div>
+    <!-- Game -->
+    <section class="card game hidden" id="gameCard">
+
+      <!-- Profile row -->
+      <div class="profileRow">
+        <div class="profileLeft">
           <div class="who" id="whoLine">—</div>
-          <div class="muted" id="metaLine">—</div>
+          <div class="meta muted" id="metaLine">—</div>
         </div>
-        <button class="btn age" id="btnAge">AGE +1</button>
+
+        <button class="btn ageBtn" id="btnAge">
+          <span class="ageTop">AGE</span>
+          <span class="ageBottom">+1</span>
+        </button>
       </div>
 
-      <div class="stats" id="statsGrid"></div>
+      <!-- Stats -->
+      <div class="statsWrap">
+        <div class="statsHeader">
+          <div class="sectionTitle">Stats</div>
+          <div class="muted small">Tap AGE to advance</div>
+        </div>
+        <div class="stats" id="statsGrid"></div>
+      </div>
 
-      <hr class="sep" />
-
-      <div class="event">
-        <div class="eventTitle" id="eventTitle">Press AGE</div>
+      <!-- Event -->
+      <div class="eventCard">
+        <div class="eventTop">
+          <div class="eventTitle" id="eventTitle">Press AGE</div>
+          <div class="badge" id="eventBadge">Event</div>
+        </div>
         <div class="eventText" id="eventText">Your life begins…</div>
         <div class="choices" id="choices"></div>
       </div>
 
-      <hr class="sep" />
-
-      <div class="row">
-        <button class="btn ghost" id="btnSave">Save</button>
-        <button class="btn ghost" id="btnReset">Reset</button>
+      <!-- Bottom actions -->
+      <div class="bottomRow">
+        <button class="btn subtle" id="btnSave">Save</button>
+        <button class="btn subtle danger" id="btnReset">Reset</button>
       </div>
-      <p class="muted small" id="saveHint"></p>
+
+      <p class="muted small saveHint" id="saveHint"></p>
     </section>
 
+    <!-- Settings modal -->
     <section class="modal hidden" id="settingsModal" role="dialog" aria-modal="true">
       <div class="modalCard">
         <div class="modalHeader">
-          <h3>Settings</h3>
-          <button class="btn ghost" id="btnCloseSettings" aria-label="Close">✖</button>
+          <div>
+            <div class="modalTitle">Settings</div>
+            <div class="muted small">Tune the feel of the game</div>
+          </div>
+          <button class="iconBtn" id="btnCloseSettings" aria-label="Close" title="Close">✖</button>
         </div>
 
-        <div class="row">
+        <div class="settingRow">
           <label class="toggle">
             <input type="checkbox" id="toggleHaptics" />
-            <span>Haptics (vibrate on choice)</span>
+            <span>
+              <b>Haptics</b>
+              <span class="muted small">Vibrate on choices</span>
+            </span>
           </label>
         </div>
 
-        <div class="row">
+        <div class="settingRow">
           <label class="toggle">
             <input type="checkbox" id="toggleHardMode" />
-            <span>Hard mode (harsher outcomes)</span>
+            <span>
+              <b>Hard mode</b>
+              <span class="muted small">Harsher outcomes</span>
+            </span>
           </label>
         </div>
 
-        <p class="muted small">
-          Expand the game by adding more entries in <code>events.json</code>.
-        </p>
+        <div class="modalFooter muted small">
+          Expand content in <code>events.json</code>.
+        </div>
       </div>
     </section>
   </main>
