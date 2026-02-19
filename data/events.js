@@ -1,131 +1,101 @@
 window.NOROVA_DATA = {
   traits: [
-    { id:"charming", name:"Charming", boostTags:["social"] },
-    { id:"studious", name:"Studious", boostTags:["school","career"] },
-    { id:"hustler",  name:"Hustler",  boostTags:["money"] },
-    { id:"tough",    name:"Tough",    boostTags:["health"] },
-    { id:"devious",  name:"Devious",  boostTags:["crime"] },
-    { id:"chaotic",  name:"Chaotic",  boostTags:["random"] },
+    { id:"charming", name:"Charming", boostTags:["social","romance"] },
+    { id:"genius", name:"Genius", boostTags:["school","career"] },
+    { id:"rebellious", name:"Rebellious", boostTags:["crime","chaos"] },
+    { id:"athletic", name:"Athletic", boostTags:["health","sports"] }
   ],
 
-  // NOTE: scalable format:
-  // requirements: { minStat: {health:40}, flag:"cheatedTest" }
-  // risk: { chance:0.25, onFail:{...effects}, failText:"..." }
+  // Event format:
+  // { id, ageMin, ageMax, title, text, tags, weight, requirements?, choices:[{label,effects,flags,addRelationship?}] }
   events: [
     {
-      id:"born",
-      ageMin:0, ageMax:0, weight:999,
-      tags:["random"],
-      title:"You were born",
-      text:"A new life begins in {country}.",
+      id:"birth",
+      ageMin:0, ageMax:0,
+      title:"Birth",
+      text:"You were born in {country}.",
+      tags:["life"],
+      weight:100,
       choices:[
-        { label:"Begin", effects:{ happiness:+6, health:+2 } }
+        { label:"Hello world", effects:{ happiness:+1 } }
       ]
     },
 
     {
-      id:"first_friend",
-      ageMin:5, ageMax:12, weight:14,
-      tags:["social"],
-      title:"A potential friend",
-      text:"Someone wants to hang out with you at school.",
+      id:"first_steps",
+      ageMin:1, ageMax:2,
+      title:"First steps",
+      text:"You take your first steps and wobble like a tiny legend.",
+      tags:["life"],
+      weight:20,
       choices:[
-        { label:"Be friendly", effects:{ happiness:+3, karma:+1 }, addRelationship:{ type:"friend" } },
-        { label:"Ignore them", effects:{ happiness:-2, karma:-1 } }
+        { label:"Keep walking", effects:{ health:+1, happiness:+1 } }
+      ]
+    },
+
+    {
+      id:"school_friend",
+      ageMin:6, ageMax:12,
+      title:"A new friend",
+      text:"Someone in class asks if you want to be friends.",
+      tags:["social","school"],
+      weight:16,
+      choices:[
+        { label:"Sure!", effects:{ happiness:+2 }, addRelationship:{ type:"friend" } },
+        { label:"Ignore them", effects:{ karma:-1, happiness:-1 } }
       ]
     },
 
     {
       id:"exam",
-      ageMin:10, ageMax:18, weight:14,
-      tags:["school"],
+      ageMin:12, ageMax:17,
       title:"Big exam",
-      text:"You have an important exam coming up.",
+      text:"You have a big exam coming up. What do you do?",
+      tags:["school"],
+      weight:16,
       choices:[
         { label:"Study hard", effects:{ intelligence:+3, happiness:-1 } },
-        { label:"Wing it", effects:{ intelligence:-2, happiness:+2 } }
+        { label:"Wing it", effects:{ intelligence:+1 } },
+        { label:"Skip it", effects:{ happiness:+1, karma:-2 } }
       ]
     },
 
     {
-      id:"cheat_test",
-      ageMin:12, ageMax:18, weight:10,
-      tags:["school","crime"],
-      title:"Cheat on a test?",
-      text:"You can see the answers. Nobody is looking.",
+      id:"job_offer",
+      ageMin:16, ageMax:40,
+      title:"Job opportunity",
+      text:"You see a job opportunity and consider applying.",
+      tags:["career"],
+      weight:10,
       choices:[
-        {
-          label:"Cheat",
-          effects:{ intelligence:+1, karma:-4, happiness:+1 },
-          flags:{ cheatedTest:true },
-          risk:{ chance:0.25, onFail:{ happiness:-3, karma:-2 }, failText:"You got caught and embarrassed." }
-        },
-        { label:"Don't cheat", effects:{ karma:+2, happiness:-1 } }
+        { label:"Apply", effects:{ happiness:+1 } },
+        { label:"Not now", effects:{ happiness:0 } }
       ]
     },
 
     {
-      id:"steal",
-      ageMin:14, ageMax:40, weight:10,
-      tags:["crime","money"],
-      title:"Sticky fingers",
-      text:"You see something expensive unattended.",
+      id:"argument_parent",
+      ageMin:10, ageMax:25,
+      title:"Family argument",
+      text:"You get into an argument at home.",
+      tags:["family"],
+      weight:12,
       choices:[
-        {
-          label:"Steal it",
-          effects:{ money:+250, karma:-5, happiness:+1 },
-          risk:{ chance:0.30, onFail:{ money:-400, happiness:-3, karma:-2 }, failText:"Security caught you." }
-        },
-        { label:"Walk away", effects:{ karma:+2 } }
+        { label:"Apologize", effects:{ karma:+1, happiness:+1 } },
+        { label:"Double down", effects:{ karma:-2, happiness:-1 } }
       ]
     },
 
     {
-      id:"sick_day",
-      ageMin:1, ageMax:90, weight:12,
-      tags:["health"],
-      title:"Sick day",
-      text:"You feel ill and exhausted.",
+      id:"random_luck",
+      ageMin:18, ageMax:60,
+      title:"Random luck",
+      text:"You find some money on the ground.",
+      tags:["money"],
+      weight:8,
       choices:[
-        { label:"Rest", effects:{ health:+3, happiness:+1, money:-20 } },
-        { label:"Ignore it", effects:{ health:-4, happiness:-1 } }
-      ]
-    },
-
-    {
-      id:"job_shift",
-      ageMin:16, ageMax:65, weight:12,
-      tags:["career","money"],
-      title:"Extra shift",
-      text:"You have a chance to pick up extra work.",
-      choices:[
-        { label:"Do it", effects:{ money:+180, happiness:-1, karma:+1 } },
-        { label:"Skip", effects:{ happiness:+1 } }
-      ]
-    },
-
-    {
-      id:"promotion",
-      ageMin:22, ageMax:65, weight:9,
-      tags:["career","money"],
-      title:"Promotion chance",
-      text:"Your manager is watching your performance.",
-      choices:[
-        { label:"Go all in", effects:{ money:+450, intelligence:+1, happiness:-1 } },
-        { label:"Coast", effects:{ happiness:+2, karma:-1 } }
-      ]
-    },
-
-    {
-      id:"old_scandal",
-      ageMin:20, ageMax:60, weight:6,
-      tags:["random","crime"],
-      requirements:{ flag:"cheatedTest" },
-      title:"Old scandal resurfaces",
-      text:"Something from your past comes back around.",
-      choices:[
-        { label:"Deny it", effects:{ happiness:-1 } },
-        { label:"Own it", effects:{ karma:+1, happiness:+1 } }
+        { label:"Keep it", effects:{ money:+120, karma:-1 } },
+        { label:"Hand it in", effects:{ karma:+2 } }
       ]
     }
   ]
