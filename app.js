@@ -111,6 +111,7 @@ function defaultState(){
     name: "",
     lastName: "",
     gender: "female",
+   nameConfirmed: false,
 
     country: "United Kingdom",
     trait: "charming",
@@ -646,7 +647,16 @@ function renderCountryPicker(){
 }
 
 /* ---------- Init ---------- */
-function wireUI(){
+function wireUI()
+
+   let nameConfirmed = false;
+
+function confirmName(){
+  nameConfirmed = true;
+  if($("btnStart")) $("btnStart").textContent = "Start Life";
+}
+
+{
   document.querySelectorAll(".navBtn").forEach(btn=>{
     btn.onclick = ()=> show(btn.dataset.view);
   });
