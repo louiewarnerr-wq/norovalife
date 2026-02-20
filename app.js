@@ -151,12 +151,18 @@ function escapeHTML(s){
   return String(s||"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;");
 }
 
-function addToFeed(title,text){
-  state.feed.unshift({ age: state.age, title:String(title||"Life"), text:String(text||""), t:Date.now() });
-  renderFeed();
+function addToFeed(title, text){
+  state.feed ||= [];
+  state.feed.push({
+    age: state.age,
+    title: String(title || "Life"),
+    text: String(text || ""),
+    t: Date.now()
+  });
+  renderFeed(true); // autoscroll to bottom
 }
 
-function renderFeed(){
+function renderFeed(scrollToBottom = false){
   const el = $("lifeFeed");
   if(!el) return;
 
@@ -174,7 +180,7 @@ function renderFeed(){
     return;
   }
 
-  el.innerHTML = items.slice(0, 200).map(it => `
+  el.innerHTML = items.slice(-250).map(it => `
     <div class="logRow">
       <div class="logAge">Age ${it.age}</div>
       <div class="logBody">
@@ -183,6 +189,14 @@ function renderFeed(){
       </div>
     </div>
   `).join("");
+
+  // ✅ BitLife feel: always stay at the bottom after new items
+  if(scrollToBottom){
+    requestAnimationFrame(() => {
+      const scroller = el.closest(".lifeLogList") || el;
+      scroller.scrollTop = scroller.scrollHeight;
+    });
+  }
 }
 
 /* ---------- Relationships ---------- */
