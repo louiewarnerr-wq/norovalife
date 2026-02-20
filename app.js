@@ -157,19 +157,30 @@ function addToFeed(title,text){
 }
 
 function renderFeed(){
-  const el=$("lifeFeed");
+  const el = $("lifeFeed");
   if(!el) return;
-  if(!state.feed.length){
-    el.innerHTML=`<div class="feedItem"><div class="muted tiny">Your life story will appear here.</div></div>`;
+
+  const items = state.feed || [];
+  if(items.length === 0){
+    el.innerHTML = `
+      <div class="logRow">
+        <div class="logAge">Age 0</div>
+        <div class="logBody">
+          <div class="logTitle muted">Life Log</div>
+          <div class="logText muted">Your life story will appear here.</div>
+        </div>
+      </div>
+    `;
     return;
   }
-  el.innerHTML = state.feed.slice(0,150).map(it=>`
-    <div class="feedItem">
-      <div class="feedTop">
-        <div>${escapeHTML(it.title)}</div>
-        <div class="feedAge">Age ${it.age}</div>
+
+  el.innerHTML = items.slice(0, 200).map(it => `
+    <div class="logRow">
+      <div class="logAge">Age ${it.age}</div>
+      <div class="logBody">
+        <div class="logTitle">${escapeHTML(it.title)}</div>
+        <div class="logText">${escapeHTML(it.text)}</div>
       </div>
-      <div class="feedText">${escapeHTML(it.text)}</div>
     </div>
   `).join("");
 }
