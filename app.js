@@ -21,6 +21,15 @@ let countries = window.NOROVA_COUNTRIES;
 
 let state = null;
 
+function escapeHTML(s){
+  return String(s ?? "")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+
 /* ---------- Name helpers (same banks as earlier) ---------- */
 function splitName(full){
   const parts = String(full || "").trim().split(/\s+/).filter(Boolean);
