@@ -725,7 +725,8 @@ function wireUI(){
     save("Saved • new life");
     show("viewLife");
     renderAll();
-
+    renderFeed(true);
+     
     // birth event
     const born = db.events.find(e=>e.ageMin===0 && e.ageMax===0) || pickEvent();
     showEvent(born);
